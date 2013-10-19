@@ -1,0 +1,13 @@
+/*jshint node:true, laxcomma:true */
+
+'use strict';
+
+// Credentials
+var SPOTIFY_USERNAME = process.env.SPOTIFY_USERNAME
+  , SPOTIFY_PASSWORD = process.env.SPOTIFY_PASSWORD
+  , PUBNUB_SUBSCRIBE_KEY = process.env.PUBNUB_SUBSCRIBE_KEY
+  , PUBNUB_PUBLISH_KEY = process.env.PUBNUB_PUBLISH_KEY
+  , PUBNUB_CHANNEL = process.env.PUBNUB_CHANNEL
+  ;
+
+require('./consumer')(SPOTIFY_USERNAME, SPOTIFY_PASSWORD, PUBNUB_SUBSCRIBE_KEY, PUBNUB_PUBLISH_KEY, PUBNUB_CHANNEL);
