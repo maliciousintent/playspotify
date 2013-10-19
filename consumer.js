@@ -5,7 +5,7 @@
 var lame = require('lame')
   , Speaker = require('speaker')
   , Spotify = require('spotify-web')
-  , swallow = require('swallow')
+  , swallow = require('node-swallow')
   , pubnub = require('pubnub')
   ;
 
