@@ -9,11 +9,14 @@ var lame = require('lame')
   , pubnub = require('pubnub')
   , xml2js = require('xml2js')
   , util = require('./util')
+  , PlayQueue = require('./playqueue').PlayQueue
   ;
 
 module.exports = function _module(SPOTIFY_USERNAME, SPOTIFY_PASSWORD, PUBNUB_SUBSCRIBE_KEY, PUBNUB_PUBLISH_KEY, PUBNUB_CHANNEL) {
   
-  var spkr = new Speaker();
+  var player = new PlayQueue();
+  
+  setInterval(function () { player.next(); }, 10000);
   
   Spotify.login(SPOTIFY_USERNAME, SPOTIFY_PASSWORD, swallow('while logging into Spotify', function (spotify) {
     var pn = pubnub.init({
@@ -44,8 +47,7 @@ module.exports = function _module(SPOTIFY_USERNAME, SPOTIFY_PASSWORD, PUBNUB_SUB
                 console.log('Found track', track.title[0], 'by', track.artist[0], '(' + track.album[0] + ', ' + track.year[0] + ')');
                                 
                 spotify.get(uri, swallow('while getting track details', function (track) {
-                  console.log('Playing: %s - %s', track.artist[0].name, track.name);
-                  _playTrack(track);
+                  player.add(track);
                 }));
               }
             });
@@ -54,21 +56,11 @@ module.exports = function _module(SPOTIFY_USERNAME, SPOTIFY_PASSWORD, PUBNUB_SUB
           
         } else {
           spotify.get(message.uri, swallow('while retrieving Spotify track', function (track) {
-            console.log('Playing: %s - %s', track.artist[0].name, track.name);
-            _playTrack(track);
+            player.add(track);
           }));
         }
       }
     });
   }));
-
-  function _playTrack(track) {
-    track.play()
-      .pipe(new lame.Decoder())
-      .pipe(spkr);
-      // .on('finish', function () {
-      //   spotify.disconnect();
-      // });
-  }
 
 };
