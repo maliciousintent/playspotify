@@ -11,7 +11,7 @@ var lame = require('lame')
 module.exports.PlayQueue = PlayQueue;
 
 function PlayQueue() {
-  this.spkr = new Speaker();
+  //this.spkr = new Speaker();
   this.tracks = [];
   this.index = -1;
   this.playing = false;
@@ -20,6 +20,11 @@ function PlayQueue() {
 nodeutils.inherits(PlayQueue, EventEmitter);
 
 PlayQueue.prototype.add = function(track) {
+
+  if ('undefined' === typeof this.spkr) {
+    this.spkr = new Speaker();
+  }
+
   this.tracks.push(track);
   console.log('[QQ] Queued track "%s" by "%s"', track.name, track.artist[0].name);
   
@@ -31,8 +36,8 @@ PlayQueue.prototype.add = function(track) {
 };
 
 PlayQueue.prototype._clearStreams = function() {
+  this._currentStreams[1] && this._currentStreams[1].unpipe();
   this._currentStreams[0] && this._currentStreams[0].unpipe();
-  this._currentStreams[0] && this._currentStreams[1].unpipe();
   this._currentStreams = [null, null];
 };
 
@@ -45,6 +50,8 @@ PlayQueue.prototype.next = function() {
   
   if ('undefined' === typeof this.tracks[this.index + 1]) {
     console.log('Playlist is empty');
+    this.spkr.end();
+    this.spkr = undefined;
     return this;
   }
   
@@ -52,6 +59,7 @@ PlayQueue.prototype.next = function() {
   this.index = this.index + 1;
   
   var track = this.tracks[this.index];
+
   
   this._currentStreams[0] = track.play();
   this._currentStreams[1] = this._currentStreams[0].pipe(new lame.Decoder());

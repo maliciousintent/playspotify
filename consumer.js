@@ -16,7 +16,7 @@ module.exports = function _module(SPOTIFY_USERNAME, SPOTIFY_PASSWORD, PUBNUB_SUB
   
   var player = new PlayQueue();
   
-  setInterval(function () { player.next(); }, 10000);
+  setInterval(function () { player.next(); }, 20000);
   
   Spotify.login(SPOTIFY_USERNAME, SPOTIFY_PASSWORD, swallow('while logging into Spotify', function (spotify) {
     var pn = pubnub.init({
@@ -38,7 +38,7 @@ module.exports = function _module(SPOTIFY_USERNAME, SPOTIFY_PASSWORD, PUBNUB_SUB
               var t_count = parseInt(data.result['total-tracks'][0], 10)
               
               if (t_count < 1) {
-                console.log('No track found for search "%s"', search);
+                console.log('No track found for search "%s"', message.search);
               } else {
                 var track = data.result.tracks[0].track[0] // id,title,artist,album,year
                   , uri = 'spotify:track:' + util.base62.fromHex(track.id[0], 22)
