@@ -16,10 +16,15 @@ function PlayQueue() {
   this.index = -1;
   this.playing = false;
   this.imskipping = false;
+  this.random = false;
   this._currentStreams = [null, null]; // play, decoded
 }
 nodeutils.inherits(PlayQueue, EventEmitter);
 
+
+PlayQueue.prototype.setRandom = function(random) {
+  this.random = random;
+};
 
 PlayQueue.prototype.add = function(track) {
 
@@ -68,14 +73,21 @@ PlayQueue.prototype.next = function() {
     }
   }
   
-  if ('undefined' === typeof this.tracks[this.index + 1]) {
-    // if playlist is over, start from begin
-    console.log('Playlist is empty');
-    this.index = -1;
+  this.playing = true;
+
+  if (this.random) {
+    this.index = Math.ceil(Math.random() * this.tracks.length);
+  } else {
+    this.index = this.index + 1;
   }
   
-  this.playing = true;
-  this.index = this.index + 1;
+
+  if ('undefined' === typeof this.tracks[this.index]) {
+    // if playlist is over, start from begin
+    console.log('Playlist is empty');
+    this.index = 0;
+  }
+  
   
   var track = this.tracks[this.index];
 

@@ -42,6 +42,25 @@ module.exports = function _module(player, spotify) {
     } else if (message.action === 'skip') {
       console.log('skip track');
       player.skip();
+    } else if (message.action === 'add-playlist') {
+      spotify.playlist(message.uri, swallow('while retrieving Spotify playlist', function (playlist) {
+        if (playlist && playlist.contents && playlist.contents.items) {
+          console.log('playlist found with ' + playlist.contents.items.length + ' items');
+          playlist.contents.items.forEach(function (song) {
+            spotify.get(song.uri, swallow('while retrieving Spotify track', function (track) {
+              player.add(track);
+            }));
+          });
+        } else {
+          console.log('cannot reproduce playlist ' + message.uri);
+        }
+      }));
+    } else if (message.action === 'random') {
+      if (message.random && message.random === 'on') {
+        player.setRandom(true);
+      } else if (message.random && message.random === 'of') {
+        player.setRandom(false);
+      }
     }
   }
 
