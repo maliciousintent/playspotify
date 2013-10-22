@@ -1,4 +1,4 @@
-/*jshint node:true, laxcomma:true, unused:true, undef:true, indent:2 */
+/* jshint node:true, indent:2, white:true, laxcomma:true, undef:true, strict:true, unused:true, eqnull:true, camelcase: false, trailing: true */
 
 'use strict';
 
@@ -9,7 +9,7 @@ var swallow = require('node-swallow')
 
 module.exports = function _module(player, spotify) {
   
-  function _parse (message) {
+  function _parse(message) {
     if (message.action === 'search') {
       spotify.search(message.search, swallow('while searching for a track', function (xml) {
         var parser = new xml2js.Parser();

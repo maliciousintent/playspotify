@@ -1,4 +1,4 @@
-/*jshint node:true, laxcomma:true, unused:true, undef:true, indent:2 */
+/* jshint node:true, indent:2, white:true, laxcomma:true, undef:true, strict:true, unused:true, eqnull:true, camelcase: false, trailing: true */
 
 'use strict';
 
@@ -21,7 +21,7 @@ function PlayQueue() {
 nodeutils.inherits(PlayQueue, EventEmitter);
 
 
-PlayQueue.prototype.add = function(track) {
+PlayQueue.prototype.add = function (track) {
 
   this.tracks.push(track);
   console.log('[QQ] Queued track "%s" by "%s"', track.name, track.artist[0].name);
@@ -34,7 +34,7 @@ PlayQueue.prototype.add = function(track) {
 };
 
 
-PlayQueue.prototype._clearStreams = function() {
+PlayQueue.prototype._clearStreams = function () {
   this._currentStreams[1] && this._currentStreams[1].unpipe();
   this._currentStreams[0] && this._currentStreams[0].unpipe();
   this._currentStreams = [null, null];
@@ -51,7 +51,7 @@ PlayQueue.prototype.skip = function () {
 };
 
 
-PlayQueue.prototype.next = function() {
+PlayQueue.prototype.next = function () {
   var that = this;
 
   if (this.tracks.length === 0) {
