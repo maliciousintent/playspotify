@@ -41,7 +41,7 @@ module.exports = function _module(player, spotify) {
       }));
     } else if (message.action === 'skip') {
       console.log('skip track');
-      player.next();
+      player.skip();
     }
   }
 

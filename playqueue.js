@@ -11,19 +11,17 @@ var lame = require('lame')
 module.exports.PlayQueue = PlayQueue;
 
 function PlayQueue() {
-  //this.spkr = new Speaker();
+  this.spkr = new Speaker();
   this.tracks = [];
   this.index = -1;
   this.playing = false;
+  this.imskipping = false;
   this._currentStreams = [null, null]; // play, decoded
 }
 nodeutils.inherits(PlayQueue, EventEmitter);
 
-PlayQueue.prototype.add = function(track) {
 
-  if ('undefined' === typeof this.spkr) {
-    this.spkr = new Speaker();
-  }
+PlayQueue.prototype.add = function(track) {
 
   this.tracks.push(track);
   console.log('[QQ] Queued track "%s" by "%s"', track.name, track.artist[0].name);
@@ -35,24 +33,45 @@ PlayQueue.prototype.add = function(track) {
   return this;
 };
 
+
 PlayQueue.prototype._clearStreams = function() {
   this._currentStreams[1] && this._currentStreams[1].unpipe();
   this._currentStreams[0] && this._currentStreams[0].unpipe();
   this._currentStreams = [null, null];
+  if (this.spkr) {
+    this.spkr.end();
+    this.spkr = undefined;
+  }
 };
+
+
+PlayQueue.prototype.skip = function () {
+  this.imskipping = true;
+  this.next();
+};
+
 
 PlayQueue.prototype.next = function() {
   var that = this;
+
+  if (this.tracks.length === 0) {
+    console.log('queue empty');
+    return this;
+  }
   
   if (this.playing) {
+    console.log('clearing streams ...');
     this._clearStreams();
+    if ('undefined' === typeof this.spkr) {
+      console.log('created speaker');
+      this.spkr = new Speaker();
+    }
   }
   
   if ('undefined' === typeof this.tracks[this.index + 1]) {
+    // if playlist is over, start from begin
     console.log('Playlist is empty');
-    this.spkr.end();
-    this.spkr = undefined;
-    return this;
+    this.index = -1;
   }
   
   this.playing = true;
@@ -69,14 +88,10 @@ PlayQueue.prototype.next = function() {
   this._currentStreams[1]
     .pipe(this.spkr)
     .on('finish', function () {
-      if (that.index < that.tracks.length - 1) {
-        that.emit('next');
-        that._currentStream = null;
-        process.nextTick(function () { that.next(); });
+      if (that.imskipping) {
+        that.imskipping = false;
       } else {
-        that._currentStream = null;
-        that.playing = false;
-        that.emit('finish'); // all tracks have been played
+        process.nextTick(function () { that.next(); });
       }
     });
     
