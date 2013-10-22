@@ -6,6 +6,8 @@ var lame = require('lame')
   , Speaker = require('speaker')
   , EventEmitter = require('events').EventEmitter
   , nodeutils = require('util')
+  , coolog = require('coolog')
+  , logger = coolog.logger('playqueue.js')
   ;
 
 module.exports.PlayQueue = PlayQueue;
@@ -27,15 +29,21 @@ PlayQueue.prototype.setRandom = function (random) {
 };
 
 PlayQueue.prototype.add = function (track) {
-
   this.tracks.push(track);
-  console.log('[QQ] Queued track "%s" by "%s"', track.name, track.artist[0].name);
+  logger.info('Queued track ' + track.name + ' by ' + track.artist[0].name);
   
   if (this.playing === false) {
     this.next();
   }
   
   return this;
+};
+
+PlayQueue.prototype.play = function (track) {
+  this.imskipping = true;
+  this.tracks.splice(this.index, 0, track);
+  this.index -= 1;
+  this.next();
 };
 
 
@@ -60,15 +68,15 @@ PlayQueue.prototype.next = function () {
   var that = this;
 
   if (this.tracks.length === 0) {
-    console.log('queue empty');
+    logger.info('queue empty');
     return this;
   }
   
   if (this.playing) {
-    console.log('clearing streams ...');
+    logger.info('clearing streams ...');
     this._clearStreams();
     if ('undefined' === typeof this.spkr) {
-      console.log('created speaker');
+      logger.info('created speaker');
       this.spkr = new Speaker();
     }
   }
@@ -80,22 +88,18 @@ PlayQueue.prototype.next = function () {
   } else {
     this.index = this.index + 1;
   }
-  
 
   if ('undefined' === typeof this.tracks[this.index]) {
     // if playlist is over, start from begin
-    console.log('Playlist is empty');
+    logger.info('Playlist is empty');
     this.index = 0;
   }
   
-  
   var track = this.tracks[this.index];
-
-  
   this._currentStreams[0] = track.play();
   this._currentStreams[1] = this._currentStreams[0].pipe(new lame.Decoder());
     
-  console.log('Playing "%s" by "%s"', track.name, track.artist[0].name);
+  logger.info('Playing ' + track.name + ' by ' + track.artist[0].name);
   
   this._currentStreams[1]
     .pipe(this.spkr)
@@ -106,7 +110,7 @@ PlayQueue.prototype.next = function () {
         process.nextTick(function () { that.next(); });
       }
     });
-    
+
   return this;
 };
 

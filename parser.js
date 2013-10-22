@@ -5,6 +5,8 @@
 var swallow = require('node-swallow')
   , xml2js = require('xml2js')
   , util = require('./util')
+  , coolog = require('coolog')
+  , logger = coolog.logger('parser.js')
   ;
 
 module.exports = function _module(player, spotify) {
@@ -16,13 +18,13 @@ module.exports = function _module(player, spotify) {
         parser.on('end', function (data) {
           var t_count = parseInt(data.result['total-tracks'][0], 10);
           if (t_count < 1) {
-            console.log('No track found for search "%s"', message.search);
+            logger.info('No track found for search "%s"', message.search);
           } else {
             var track = data.result.tracks[0].track[0] // id,title,artist,album,year
               , uri = 'spotify:track:' + util.base62.fromHex(track.id[0], 22)
               ;
 
-            console.log('Found track', track.title[0], 'by', track.artist[0], '(' + track.album[0] + ', ' + track.year[0] + ')');
+            logger.info('Found track', track.title[0], 'by', track.artist[0], '(' + track.album[0] + ', ' + track.year[0] + ')');
                             
             spotify.get(uri, swallow('while getting track details', function (track) {
               player.add(track);
@@ -33,26 +35,34 @@ module.exports = function _module(player, spotify) {
       }));
     } else if (message.action === 'play') {
       spotify.get(message.uri, swallow('while retrieving Spotify track', function (track) {
-        player.add(track);
+        if (track) {
+          player.play(track);
+        } else {
+          logger.warn('cannot reproduce track with URI ', message.uri);
+        }
       }));
     } else if (message.action === 'add') {
       spotify.get(message.uri, swallow('while retrieving Spotify track', function (track) {
-        player.add(track);
+        if (track) {
+          player.add(track);
+        } else {
+          logger.warn('cannot reproduce track with URI ', message.uri);
+        }
       }));
     } else if (message.action === 'skip') {
-      console.log('skip track');
+      logger.info('skip current track');
       player.skip();
     } else if (message.action === 'add-playlist') {
       spotify.playlist(message.uri, swallow('while retrieving Spotify playlist', function (playlist) {
         if (playlist && playlist.contents && playlist.contents.items) {
-          console.log('playlist found with ' + playlist.contents.items.length + ' items');
+          logger.info('playlist found with ' + playlist.contents.items.length + ' items');
           playlist.contents.items.forEach(function (song) {
             spotify.get(song.uri, swallow('while retrieving Spotify track', function (track) {
               player.add(track);
             }));
           });
         } else {
-          console.log('cannot reproduce playlist ' + message.uri);
+          logger.warn('cannot reproduce playlist ' + message.uri);
         }
       }));
     } else if (message.action === 'random') {
