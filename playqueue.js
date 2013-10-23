@@ -53,7 +53,9 @@ function PlayQueue(spotify) {
     if (that.index > -1) {
       // play tracks, if any
       that.index = that.index - 1;
-      that.next();
+      setTimeout(function () {
+        that.next();
+      }, 1000 * 10);
     }
   });
 
