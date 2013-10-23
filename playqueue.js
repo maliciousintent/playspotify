@@ -130,6 +130,7 @@ PlayQueue.prototype.next = function () {
 
   if (this.tracks.length === 0) {
     logger.info('queue empty');
+    this.playing = false;
     return this;
   }
   
@@ -168,7 +169,7 @@ PlayQueue.prototype.next = function () {
       that.tracks[that.tracks.indexOf(track)] = {
         'uri': track,
         'track': trackObj
-      }
+      };
       that._play(trackObj);
     });
   } else {
@@ -176,6 +177,13 @@ PlayQueue.prototype.next = function () {
   }
 
   return this;
+};
+
+PlayQueue.prototype.clear = function () {
+  this.tracks = [];
+  this.index = 0;
+  // force clearing...
+  this.next();
 };
 
 PlayQueue.prototype._play = function (track) {

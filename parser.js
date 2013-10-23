@@ -95,6 +95,8 @@ module.exports = function _module(player, spotify) {
       } else if (message.random && message.random === 'of') {
         player.setRandom(false);
       }
+    } else if (message.action === 'clear') {
+      player.clear();
     }
   }
 
