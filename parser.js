@@ -97,6 +97,8 @@ module.exports = function _module(player, spotify) {
       }
     } else if (message.action === 'clear') {
       player.clear();
+    } else if (message.action === 'suicide') {
+      process.exit(0);
     }
   }
 

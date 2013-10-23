@@ -2,6 +2,9 @@
 /*global setInterval:true */
 'use strict';
 
+var NATION = 'IT' //process.env.NATION
+  ;
+
 var lame = require('lame')
   , Speaker = require('speaker')
   , EventEmitter = require('events').EventEmitter
@@ -86,8 +89,18 @@ PlayQueue.prototype.setRandom = function (random) {
 };
 
 PlayQueue.prototype.add = function (track) {
+  var countriesAllowed = track.restriction[0].countriesAllowed
+    , countriesForbidden = track.restriction[0].countriesForbidden
+    ;
+
+  if ((countriesForbidden !== undefined && countriesForbidden.indexOf(NATION) !== -1) ||
+      (countriesAllowed !== undefined && countriesAllowed.indexOf(NATION) === -1)) {
+    logger.info("cannot reproduce this song in this nation,\nAllowed:", countriesAllowed, '\nRestriction:', countriesForbidden);
+    return this;
+  }
+
   this.tracks.push({
-    'uri': util.gid2uid(track.gid),
+    'uri': 'spotify:track:' + util.gid2uid(track.gid),
     'track': track
   });
 
