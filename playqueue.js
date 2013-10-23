@@ -61,7 +61,7 @@ function PlayQueue(spotify) {
       if ('string' === typeof track) {
         jsonTracks.push(track);
       } else {
-        jsonTracks.push('spotify:track:' + util.gid2uid(track.gid));
+        jsonTracks.push(track.uri);
       }
     });
 
@@ -86,7 +86,11 @@ PlayQueue.prototype.setRandom = function (random) {
 };
 
 PlayQueue.prototype.add = function (track) {
-  this.tracks.push(track);
+  this.tracks.push({
+    'uri': util.gid2uid(track.gid),
+    'track': track
+  });
+
   logger.info('Queued track ' + track.name + ' by ' + track.artist[0].name);
   
   if (this.playing === false) {
@@ -161,11 +165,14 @@ PlayQueue.prototype.next = function () {
         console.log("cannot get track ", track);
         return;
       }
-      that.tracks[that.tracks.indexOf(track)] = trackObj;
+      that.tracks[that.tracks.indexOf(track)] = {
+        'uri': track,
+        'track': trackObj
+      }
       that._play(trackObj);
     });
   } else {
-    this._play(track);
+    this._play(track.track);
   }
 
   return this;
