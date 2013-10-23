@@ -1,3 +1,6 @@
+/*jshint node:true, indent:2, white:true, laxcomma:true, undef:true, strict:true, unused:true, eqnull:true, camelcase: false, trailing: true */
+
+'use strict';
 
 /**
  * From Spotify Web client code.
@@ -48,3 +51,18 @@ module.exports.base62 = function () {
                }
   }
 }();
+
+
+module.exports.gid2uid = function (gid) {
+  var b = ''
+    , c = 0
+    , a = 0
+    , uid
+    ;
+
+  for (b = '', c = 0, a = gid.length; c < a; ++c) {
+    b += (gid[c] + 256).toString(16).slice(-2);
+  }
+  uid = module.exports.base62.fromHex(b, 22);
+  return uid;
+}

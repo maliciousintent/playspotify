@@ -1,4 +1,4 @@
-/* jshint node:true, indent:2, white:true, laxcomma:true, undef:true, strict:true, unused:true, eqnull:true, camelcase: false, trailing: true */
+/*jshint node:true, indent:2, white:true, laxcomma:true, undef:true, strict:true, unused:true, eqnull:true, camelcase: false, trailing: true */
 
 'use strict';
 
@@ -43,7 +43,6 @@ module.exports = function _module(player, spotify) {
       }));
     } else if (message.action === 'add') {
       spotify.get(message.uri, swallow('while retrieving Spotify track', function (data) {
-
         if (/spotify:track:.+$/i.test(message.uri) && data) {
           player.add(data);
         } else if (/spotify:album:.+$/i.test(message.uri) && data && data.disc) {

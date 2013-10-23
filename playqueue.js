@@ -1,5 +1,5 @@
-/* jshint node:true, indent:2, white:true, laxcomma:true, undef:true, strict:true, unused:true, eqnull:true, camelcase: false, trailing: true */
-
+/*jshint node:true, indent:2, white:true, laxcomma:true, undef:true, strict:true, unused:true, eqnull:true, camelcase: false, trailing: true */
+/*global setInterval:true */
 'use strict';
 
 var lame = require('lame')
@@ -8,18 +8,75 @@ var lame = require('lame')
   , nodeutils = require('util')
   , coolog = require('coolog')
   , logger = coolog.logger('playqueue.js')
+  , redis = require("redis")
+  , util = require('./util')
   ;
+
+var client = redis.createClient()
+  ;
+
+client.on("error", function (err) {
+  logger.error("Redis Error " + err);
+});
 
 module.exports.PlayQueue = PlayQueue;
 
-function PlayQueue() {
+function PlayQueue(spotify) {
+  var that = this;
+  this.spotify = spotify;
   this.spkr = new Speaker();
-  this.tracks = [];
-  this.index = -1;
   this.playing = false;
   this.imskipping = false;
   this.random = false;
   this._currentStreams = [null, null]; // play, decoded
+
+  this.tracks = [];
+  this.index = client.get;
+  
+  client.get('index', function (err, body) {
+    that.index = body || -1;
+  });
+
+  client.get('tracks', function (err, body) {
+    if (body === null) {
+      that.tracks = [];
+      // just in case..
+      that.index = -1;
+    } else {
+      that.tracks = JSON.parse(body);
+    }
+
+    logger.debug('tracks and index loaded from redis', that.tracks, that.index);
+    if (that.index > -1) {
+      // play tracks, if any
+      that.index = that.index - 1;
+      that.next();
+    }
+  });
+
+  // saving routine
+  setInterval(function () {
+    var jsonTracks = [];
+    that.tracks.forEach(function (track) {
+      if ('string' === typeof track) {
+        jsonTracks.push(track);
+      } else {
+        jsonTracks.push('spotify:track:' + util.gid2uid(track.gid));
+      }
+    });
+
+    logger.debug('saving data on redis');
+    client.set('index', that.index, function (/*jshint unused:false */ err, res) {
+      if (err) {
+        logger.error("error while saving on redis", err);
+      }
+    });
+    client.set('tracks', JSON.stringify(jsonTracks), function (/*jshint unused:false */ err, res) {
+      if (err) {
+        logger.error("error while saving on redis", err);
+      }
+    });
+  }, 1000 * 10);
 }
 nodeutils.inherits(PlayQueue, EventEmitter);
 
@@ -96,6 +153,27 @@ PlayQueue.prototype.next = function () {
   }
   
   var track = this.tracks[this.index];
+
+  if ('string' === typeof track) {
+    this.spotify.get(track, function (err, trackObj) {
+      logger.debug('getting track from spotify...');
+      if (err) {
+        console.log("cannot get track ", track);
+        return;
+      }
+      that.tracks[that.tracks.indexOf(track)] = trackObj;
+      that._play(trackObj);
+    });
+  } else {
+    this._play(track);
+  }
+
+  return this;
+};
+
+PlayQueue.prototype._play = function (track) {
+  var that = this;
+
   this._currentStreams[0] = track.play();
   this._currentStreams[1] = this._currentStreams[0].pipe(new lame.Decoder());
     
@@ -110,7 +188,5 @@ PlayQueue.prototype.next = function () {
         process.nextTick(function () { that.next(); });
       }
     });
-
-  return this;
 };
 
