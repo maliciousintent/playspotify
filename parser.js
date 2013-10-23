@@ -56,18 +56,32 @@ module.exports = function _module(player, spotify) {
       logger.info('skip current track');
       player.skip();
     } else if (message.action === 'add-playlist') {
-      spotify.playlist(message.uri, swallow('while retrieving Spotify playlist', function (playlist) {
-        if (playlist && playlist.contents && playlist.contents.items) {
-          logger.info('playlist found with ' + playlist.contents.items.length + ' items');
-          playlist.contents.items.forEach(function (track) {
-            spotify.get(track.uri, swallow('while retrieving Spotify track', function (track) {
-              player.add(track);
-            }));
-          });
-        } else {
-          logger.warn('cannot reproduce playlist ' + message.uri);
-        }
-      }));
+      try {
+        spotify.playlist(message.uri, function (err, playlist) {
+          if (playlist && playlist.contents && playlist.contents.items) {
+            logger.info('playlist found with ' + playlist.contents.items.length + ' items');
+            playlist.contents.items.forEach(function (track) {
+              if (track.uri.indexOf(':local:') !== -1) {
+                logger.info('Skipping local track ', track.uri);
+                return;
+              }
+              spotify.get(track.uri, function (err, track) {
+                console.log('found track');
+                if (err) {
+                  logger.error('Cant find song for URI');
+                  return;
+                }
+                logger.info('added track ' + track.name);
+                player.add(track);
+              });
+            });
+          } else {
+            logger.warn('cannot reproduce playlist ' + message.uri);
+          }
+        });
+      } catch (e) {
+        console.trace(e);
+      }
     } else if (message.action === 'add-album') {
       spotify.get(message.uri, swallow('while retrieving Spotify album', function (album) {
         if (album && album.disc) {

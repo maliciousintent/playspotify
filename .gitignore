@@ -10,6 +10,7 @@ lib-cov
 *.out
 *.pid
 *.gz
+*.rdb
 
 pids
 logs
