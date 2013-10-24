@@ -9,27 +9,50 @@ var swallow = require('node-swallow')
   , logger = coolog.logger('parser.js')
   ;
 
-module.exports = function _module(player, spotify) {
+module.exports = function _module(player, spotify, pubnub, CHANNEL_NAME) {
   
   function _parse(message) {
     if (message.action === 'search') {
       spotify.search(message.search, swallow('while searching for a track', function (xml) {
         var parser = new xml2js.Parser();
         parser.on('end', function (data) {
-          var t_count = parseInt(data.result['total-tracks'][0], 10);
+          var t_count = parseInt(data.result['total-tracks'][0], 10)
+            , tracks_arr = []
+            , msg
+            ;
+            
           if (t_count < 1) {
             logger.info('No track found for search "%s"', message.search);
+            msg = {
+                answer_id: message.answer_to,
+                message: 'Not Found'
+            };
           } else {
-            var track = data.result.tracks[0].track[0] // id,title,artist,album,year
-              , uri = 'spotify:track:' + util.base62.fromHex(track.id[0], 22)
-              ;
-
-            logger.info('Found track', track.title[0], 'by', track.artist[0], '(' + track.album[0] + ', ' + track.year[0] + ')');
-                            
-            spotify.get(uri, swallow('while getting track details', function (track) {
-              player.add(track);
-            }));
+            data.result.tracks[0].track.forEach(function (track, i) {
+              if (i>5) {
+                // limit the results due to pubnub
+                return false;
+              }
+              tracks_arr.push({
+                answer_id: message.answer_to,
+                name: track.title[0],
+                artist: track.artist[0],
+                album: track.album[0],
+                year: track.year[0],
+                uri: 'spotify:track:' + util.base62.fromHex(track.id[0], 22)
+              });
+            });
+            
+            msg = {
+              answer_id: message.answer_to,
+              message: tracks_arr          
+            };
           }
+          
+          pubnub.publish({
+              channel: CHANNEL_NAME,
+              message: msg
+          });
         });
         parser.parseString(xml);
       }));

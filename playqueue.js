@@ -204,6 +204,12 @@ PlayQueue.prototype.clear = function () {
 PlayQueue.prototype._play = function (track) {
   var that = this;
 
+  if (typeof track.play !== 'function') {
+    // fix "track.play is not a function"
+    this.next();
+    return;
+  }
+
   this._currentStreams[0] = track.play();
   this._currentStreams[1] = this._currentStreams[0].pipe(new lame.Decoder());
     

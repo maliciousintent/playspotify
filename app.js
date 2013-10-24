@@ -30,7 +30,7 @@ Spotify.login(SPOTIFY_USERNAME, SPOTIFY_PASSWORD, swallow('while logging into Sp
   var player = new PlayQueue(spotify);
 
   // init parser
-  parser = require('./parser')(player, spotify);
+  parser = require('./parser')(player, spotify, pn, PUBNUB_CHANNEL);
 
   pn.subscribe({
     channel: PUBNUB_CHANNEL,
