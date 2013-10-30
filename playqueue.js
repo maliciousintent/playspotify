@@ -117,8 +117,10 @@ PlayQueue.prototype.add = function (track) {
 
 PlayQueue.prototype.play = function (track) {
   this.imskipping = true;
-  this.tracks.splice(this.index, 0, track);
-  this.index -= 1;
+  this.tracks.splice(this.index + 1, 0, {
+    'uri': 'spotify:track:' + util.gid2uid(track.gid),
+    'track': track
+  });
   this.next();
 };
 
