@@ -13,49 +13,29 @@ module.exports = function _module(player, spotify, pubnub, CHANNEL_NAME) {
   
   function _parse(message) {
     if (message.action === 'search') {
-      spotify.search(message.search, swallow('while searching for a track', function (xml) {
-        var parser = new xml2js.Parser();
-        parser.on('end', function (data) {
-          var t_count = parseInt(data.result['total-tracks'][0], 10)
-            , tracks_arr = []
-            , msg
-            ;
-            
-          if (t_count < 1) {
-            logger.info('No track found for search "%s"', message.search);
-            msg = {
-                answer_id: message.answer_to,
-                message: 'Not Found'
-            };
-          } else {
-            data.result.tracks[0].track.forEach(function (track, i) {
-              if (i>5) {
-                // limit the results due to pubnub
-                return false;
-              }
-              tracks_arr.push({
-                answer_id: message.answer_to,
-                name: track.title[0],
-                artist: track.artist[0],
-                album: track.album[0],
-                year: track.year[0],
-                uri: 'spotify:track:' + util.base62.fromHex(track.id[0], 22)
-              });
-            });
-            
-            msg = {
+      _search(message.search, function (tracks) {
+        var msg = {}
+        ;
+        if (tracks.length < 1) {
+          msg = {
               answer_id: message.answer_to,
-              message: tracks_arr          
-            };
-          }
-          
-          pubnub.publish({
-              channel: CHANNEL_NAME,
-              message: msg
-          });
+              message: 'Not Found'
+          };
+        } else {
+          msg = {
+            answer_id: message.answer_to,
+            message: tracks.slice(0,5)
+          };
+        }
+        
+        pubnub.publish({
+          channel: CHANNEL_NAME,
+          message: msg
         });
-        parser.parseString(xml);
-      }));
+      });
+
+    } else if (message.action === 'addfirst') {
+
     } else if (message.action === 'play') {
       spotify.get(message.uri, swallow('while retrieving Spotify track', function (track) {
         if (track) {
@@ -134,6 +114,33 @@ module.exports = function _module(player, spotify, pubnub, CHANNEL_NAME) {
         }));
       });
     });
+  }
+
+  function _search(query, callback) {
+    spotify.search(query, swallow('while searching for a track', function (xml) {
+      var parser = new xml2js.Parser();
+      parser.on('end', function (data) {
+        var t_count = parseInt(data.result['total-tracks'][0], 10)
+          , tracks_arr = []
+          ;
+
+        if (t_count > 0) {
+          data.result.tracks[0].track.forEach(function (track) {
+            tracks_arr.push({
+              name: track.title[0],
+              artist: track.artist[0],
+              album: track.album[0],
+              year: track.year[0],
+              uri: 'spotify:track:' + util.base62.fromHex(track.id[0], 22)
+            });
+          });
+        }
+
+        callback(tracks_arr);
+      });
+
+      parser.parseString(xml);
+    }));
   }
 
   return {
