@@ -24,7 +24,7 @@ module.exports = function _module(player, spotify, pubnub, CHANNEL_NAME) {
         } else {
           msg = {
             answer_id: message.answer_to,
-            message: tracks.slice(0,5)
+            message: tracks.slice(0, 5)
           };
         }
         
@@ -35,6 +35,20 @@ module.exports = function _module(player, spotify, pubnub, CHANNEL_NAME) {
       });
 
     } else if (message.action === 'addfirst') {
+      _search(message.search, function (tracks) {
+        console.log(tracks);
+        if (tracks.length < 1) {
+          logger.warn("nothing to add for query ", message.search);
+        } else {
+          spotify.get(tracks[0].uri, swallow('while retrieving Spotify track', function (track) {
+            if (track) {
+              player.add(track);
+            } else {
+              logger.warn('cannot reproduce track with URI ', message.uri);
+            }
+          }));
+        }
+      });
 
     } else if (message.action === 'play') {
       spotify.get(message.uri, swallow('while retrieving Spotify track', function (track) {
