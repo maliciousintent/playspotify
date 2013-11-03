@@ -11,7 +11,8 @@
     "node-swallow": "0.0.3",
     "xml2js": "~0.2.8",
     "coolog": "~2.1.2",
-    "redis": "~0.9.0"
+    "redis": "~0.9.0",
+    "sugar": "~1.4.1"
   },
   "devDependencies": {},
   "scripts": {

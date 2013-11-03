@@ -28,6 +28,15 @@ Spotify.login(SPOTIFY_USERNAME, SPOTIFY_PASSWORD, swallow('while logging into Sp
   });
 
   var player = new PlayQueue(spotify);
+  
+  function _sendMsg(msg) {
+    pn.publish({
+      channel: PUBNUB_CHANNEL,
+      message: msg
+    });
+  });
+  player.on('error', _sendMsg);
+  player.on('message', _sendMsg);
 
   // init parser
   parser = require('./parser')(player, spotify, pn, PUBNUB_CHANNEL);
