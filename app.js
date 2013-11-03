@@ -34,7 +34,7 @@ Spotify.login(SPOTIFY_USERNAME, SPOTIFY_PASSWORD, swallow('while logging into Sp
       channel: PUBNUB_CHANNEL,
       message: msg
     });
-  });
+  }
   player.on('error', _sendMsg);
   player.on('message', _sendMsg);
 
